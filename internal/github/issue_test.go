@@ -19,7 +19,10 @@ import (
 )
 
 func TestIssueHelper_Create(t *testing.T) {
-	const expectedTitle = "Cherry-picking error for `e3229f3c533ed51070beff092e5c7694a8ee81f0`"
+	const (
+		expectedTitle    = "Cherry-picking error for `e3229f3c533ed51070beff092e5c7694a8ee81f0`"
+		expectedAssignee = "ybettan"
+	)
 
 	issue := &github.Issue{Number: github.Int(456)}
 	repoName := &gh.RepoName{Owner: "owner", Repo: "repo"}
@@ -27,6 +30,9 @@ func TestIssueHelper_Create(t *testing.T) {
 	commit := &object.Commit{
 		Hash:    plumbing.NewHash("e3229f3c533ed51070beff092e5c7694a8ee81f0"),
 		Message: "Some commit message\nspanning over two lines.",
+		Author: object.Signature{
+			Name: "Yoni Bettan",
+		},
 	}
 
 	t.Run("regular error", func(t *testing.T) {
@@ -59,6 +65,7 @@ func TestIssueHelper_Create(t *testing.T) {
 
 					assert.Equal(t, expectedBody, m["body"])
 					assert.Equal(t, expectedTitle, m["title"])
+					assert.Equal(t, expectedAssignee, m["assignee"])
 					assert.Contains(t, m["labels"], "gitstream")
 					assert.NoError(
 						t,
@@ -118,6 +125,7 @@ func TestIssueHelper_Create(t *testing.T) {
 
 					assert.Equal(t, expectedBody, m["body"])
 					assert.Equal(t, expectedTitle, m["title"])
+					assert.Equal(t, expectedAssignee, m["assignee"])
 					assert.Contains(t, m["labels"], "gitstream")
 
 					assert.NoError(
