@@ -26,10 +26,11 @@ func TestPRHelperImpl_Create(t *testing.T) {
 			"```\n\n" +
 			"---\n\n" +
 			"Markup: e3229f3c533ed51070beff092e5c7694a8ee81f0"
-		expectedTitle = "Cherry-pick `e3229f3c533ed51070beff092e5c7694a8ee81f0` from upstream"
-		owner         = "owner"
-		prNumber      = 456
-		repo          = "repo"
+		expectedTitle    = "Cherry-pick `e3229f3c533ed51070beff092e5c7694a8ee81f0` from upstream"
+		owner            = "owner"
+		prNumber         = 456
+		repo             = "repo"
+		expectedReviewer = "ybettan"
 	)
 
 	pr := &github.PullRequest{
@@ -50,6 +51,24 @@ func TestPRHelperImpl_Create(t *testing.T) {
 				assert.Equal(t, expectedBody, m["body"])
 				assert.Equal(t, expectedTitle, m["title"])
 				assert.Equal(t, draft, m["draft"])
+
+				assert.NoError(
+					t,
+					json.NewEncoder(w).Encode(pr),
+				)
+			}),
+		),
+		mock.WithRequestMatchHandler(
+			mock.PostReposPullsRequestedReviewersByOwnerByRepoByPullNumber,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				m := make(map[string]interface{})
+
+				assert.NoError(
+					t,
+					json.NewDecoder(r.Body).Decode(&m),
+				)
+
+				assert.Equal(t, []interface{}{expectedReviewer}, m["reviewers"])
 
 				assert.NoError(
 					t,
@@ -88,6 +107,10 @@ func TestPRHelperImpl_Create(t *testing.T) {
 		&object.Commit{
 			Hash:    plumbing.NewHash("e3229f3c533ed51070beff092e5c7694a8ee81f0"),
 			Message: "Some commit message\nspreading over two lines.",
+			Author: object.Signature{
+				Name:  "Yoni Bettan",
+				Email: "yonibettan@gmail.com",
+			},
 		},
 		draft,
 	)

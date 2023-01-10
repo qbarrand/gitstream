@@ -75,6 +75,17 @@ func (ph *PRHelperImpl) Create(ctx context.Context, branch, base, upstreamURL st
 		return nil, fmt.Errorf("could not create the pull request: %v", err)
 	}
 
+	reviewersRequest := github.ReviewersRequest{
+		Reviewers: []string{
+			GetAssignee(commit.Author.Name),
+		},
+	}
+
+	pr, _, err = ph.gc.PullRequests.RequestReviewers(ctx, ph.repoName.Owner, ph.repoName.Repo, *pr.Number, reviewersRequest)
+	if err != nil {
+		return nil, fmt.Errorf("could not request reviewers for pull request: %v", err)
+	}
+
 	_, _, err = ph.gc.Issues.AddLabelsToIssue(ctx, ph.repoName.Owner, ph.repoName.Repo, *pr.Number, []string{internal.GitStreamLabel})
 	if err != nil {
 		return nil, fmt.Errorf("could not label PR: %v", err)

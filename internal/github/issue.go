@@ -53,6 +53,7 @@ func (ih *IssueHelperImpl) Create(ctx context.Context, err error, upstreamURL st
 		return nil, fmt.Errorf("could not execute issue template: %v", err)
 	}
 
+	assignee := GetAssignee(commit.Author.Name)
 	req := github.IssueRequest{
 		Title: github.String(
 			fmt.Sprintf("Cherry-picking error for `%s`", sha),
@@ -60,7 +61,8 @@ func (ih *IssueHelperImpl) Create(ctx context.Context, err error, upstreamURL st
 		Body: github.String(
 			buf.String(),
 		),
-		Labels: &[]string{internal.GitStreamLabel},
+		Labels:   &[]string{internal.GitStreamLabel},
+		Assignee: &assignee,
 	}
 
 	issue, _, err := ih.gc.Issues.Create(ctx, ih.repoName.Owner, ih.repoName.Repo, &req)
